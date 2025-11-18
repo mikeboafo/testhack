@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Vuln Login Demo</title>
+  <style>
+    body { font-family: system-ui, Arial; display:flex; min-height:100vh; align-items:center; justify-content:center; background:#f3f6f9; }
+    .card { background:#fff; padding:22px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.08); width:360px; }
+    input { width:100%; padding:10px; margin:8px 0; border-radius:6px; border:1px solid #ddd; }
+    button { padding:10px 14px; width:100%; border-radius:6px; border:0; background:#0b74de; color:#fff; cursor:pointer; }
+    .log { margin-top:12px; font-family:monospace; white-space:pre-wrap; background:#111; color:#0f0; padding:10px; border-radius:6px; font-size:13px; max-height:160px; overflow:auto;}
+    .hint { font-size:13px; color:#555; margin-bottom:8px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h3>Vuln Login Demo</h3>
+    <p class="hint">Use this form to test insecure auth flows. Default users: alice/alice123, bob/password, admin/admin</p>
+
+    <form id="loginForm">
+      <input id="username" name="username" placeholder="username" />
+      <input id="password" name="password" type="password" placeholder="password" />
+      <button type="submit">Login</button>
+    </form>
+
+    <div style="margin-top:10px;">
+      <button id="getProfile">GET /api/profile</button>
+    </div>
+
+    <div class="log" id="log">Log output...</div>
+  </div>
+
+  <script>
+    const logEl = document.getElementById('log');
+    const base = '';
+
+    function log(text) { logEl.textContent = (new Date()).toLocaleTimeString() + ' — ' + text + '\n' + logEl.textContent; }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      log(`POST /api/login -> username="${username}" password="${password}"`);
+      try {
+        const res = await fetch(base + '/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+          credentials: 'include'
+        });
+        const data = await res.json();
+        log('Response: ' + JSON.stringify(data));
+      } catch (err) {
+        log('Error: ' + err.toString());
+      }
+    });
+
+    document.getElementById('getProfile').addEventListener('click', async () => {
+      log('GET /api/profile (will use cookies)');
+      try {
+        const res = await fetch(base + '/api/profile', { credentials: 'include' });
+        const data = await res.json();
+        log('Response: ' + JSON.stringify(data));
+      } catch (err) {
+        log('Error: ' + err.toString());
+      }
+    });
+
+    // prefill convenient test credentials
+    document.getElementById('username').value = 'alice';
+    document.getElementById('password').value = 'alice123';
+  </script>
+</body>
+</html>
