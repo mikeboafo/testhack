@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const path = require("path");
-const serverless = require("serverless-http"); // install this: npm i serverless-http
+const serverless = require("serverless-http");
 
 const app = express();
 
@@ -53,5 +53,11 @@ app.get("/api/profile", (req, res) => {
   res.json({ ok: true, profile: { id: user.id, username: user.username, note: "This is an insecure test profile." } });
 });
 
-// Wrap for Vercel serverless
+// ✅ Detect if running locally
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => console.log(`Local server running at http://localhost:${PORT}`));
+}
+
+// ✅ Export for Vercel serverless
 module.exports = serverless(app);

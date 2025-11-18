@@ -1,6 +1,9 @@
 {
   "name": "vuln-login-demo",
   "version": "1.0.0",
+  "scripts": {
+    "dev": "node api/server.js"
+  },
   "dependencies": {
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
@@ -8,3 +11,4 @@
     "serverless-http": "^4.0.0"
   }
 }
+
