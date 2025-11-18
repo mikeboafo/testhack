@@ -2,8 +2,9 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const path = require('path');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -36,14 +37,16 @@ app.post('/api/login', (req, res) => {
 
   // Vulnerable check: if username contains SQL-like always-true injection, accept
   if (/('|")\s*or\s*.+?=.+?/i.test(username)) {
-    // "injection" detected — simulate bypass
-    return res.json({ ok: true, message: 'Login bypassed via injection (simulated).', token: 'injection-token' });
+    return res.json({
+      ok: true,
+      message: 'Login bypassed via injection (simulated).',
+      token: 'injection-token'
+    });
   }
 
   // naive plaintext check
   const user = users.find(u => u.username === username && u.password === password);
   if (user) {
-    // set a simple cookie to simulate session
     res.cookie('session', `user-${user.id}`, { httpOnly: true });
     return res.json({ ok: true, message: 'Login success', token: `token-${user.id}` });
   }
@@ -52,20 +55,25 @@ app.post('/api/login', (req, res) => {
 });
 
 /**
- * Protected resource that checks for the cookie token.
- * This is intentionally weak: cookie value is predictable.
+ * Protected route (intentionally weak session check)
  */
 app.get('/api/profile', (req, res) => {
   const session = req.cookies.session || '';
   if (!session) return res.status(401).json({ ok: false, message: 'Not authenticated' });
 
-  // predictable mapping: session === "user-<id>"
   const id = parseInt(session.replace('user-', ''), 10);
   const user = users.find(u => u.id === id);
   if (!user) return res.status(401).json({ ok: false, message: 'Invalid session' });
 
-  // return user profile (no sensitive redaction — intentionally insecure)
-  res.json({ ok: true, profile: { id: user.id, username: user.username, note: 'This is an insecure test profile.' } });
+  res.json({
+    ok: true,
+    profile: {
+      id: user.id,
+      username: user.username,
+      note: 'This is an insecure test profile.'
+    }
+  });
 });
 
-app.listen(PORT, () => console.log(`VULN demo server running on http://localhost:${PORT}`));
+// ❗ REQUIRED FOR VERCEL — DO NOT REMOVE
+module.exports = app;
